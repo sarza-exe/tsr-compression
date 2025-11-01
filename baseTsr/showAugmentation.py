@@ -15,7 +15,8 @@ def unnormalize(img_tensor, mean=(0.5,0.5,0.5), std=(0.5,0.5,0.5)):
     # convert to HWC numpy
     return img.permute(1, 2, 0).numpy()
 
-# remove shuffle=True form train_loader in augment.py to see augmentation of the same image
+# remove shuffle=True form train_loader in data_augment.py / data_original.py
+# to see augmentation of the same image
 def showBatch(train_loader):
     # get first batch
     images, labels = next(iter(train_loader))  # images shape: (B, C, H, W)

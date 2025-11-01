@@ -61,7 +61,7 @@ val_transforms = transform.Compose([
 ])
 
 # Create datasets, Note: download=True will fetch the dataset if not present.
-train_dataset = GTSRB(root=root, split='train', transform=train_transforms, download=True)
+train_dataset = GTSRB(root=root, split='train', transform=train_transforms, download=False)
 val_dataset = GTSRB(root=root, split='test', transform=val_transforms, download=False)
 
 # Create DataLoaders
