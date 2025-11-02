@@ -13,6 +13,4 @@
 *.env
 
 # DVC Ignores
-/.dvc/cache
-/.dvc/config.local
 Datasets/data/
