@@ -7,5 +7,5 @@
 **/venv
 **/.git
 **/__pycache__
-**/data
 *.env
+/Datasets/data/

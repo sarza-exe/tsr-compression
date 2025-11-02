@@ -1,10 +1,10 @@
 from torch.utils.data import DataLoader
-from Datasets.sources.GTSRB import GTSRB
+from sources.GTSRB import *
 import torchvision.transforms as transform
 from Datasets.Augmentation.showAugmentation import showBatch
 
 # Path to the GTSRB dataset folder
-root = "../data/GTSRB"
+root = "./data/GTSRB"
 
 # Resize images to 32x32, convert to tensor, and normalize pixel values
 train_transforms = transform.Compose([
@@ -38,4 +38,3 @@ if __name__ == "__main__":
     print("Images min / max (normalized):", images.min().item(), images.max().item())
 
     showBatch(train_loader)
-

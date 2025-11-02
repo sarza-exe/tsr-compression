@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-from torchvision.datasets import GTSRB
+from Datasets.sources.GTSRB import GTSRB
 import torchvision.transforms as transform
 from showAugmentation import showBatch
 
@@ -61,8 +61,8 @@ val_transforms = transform.Compose([
 ])
 
 # Create datasets, Note: download=True will fetch the dataset if not present.
-train_dataset = GTSRB(root=root, split='train', transform=train_transforms, download=False)
-val_dataset = GTSRB(root=root, split='test', transform=val_transforms, download=False)
+train_dataset = GTSRB(root=root, split='train', transform=train_transforms)
+val_dataset = GTSRB(root=root, split='test', transform=val_transforms)
 
 # Create DataLoaders
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4) #pin_memory=True
