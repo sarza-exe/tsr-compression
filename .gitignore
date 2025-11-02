@@ -1,10 +1,18 @@
-*
-!/**/
-!*.*
-**/.idea
-**/.vscode
+# Virtual Environments
 **/.venv
 **/venv
-**/.git
+
+# IDE folders
+**/.idea
+**/.vscode
+
+# Python cache
 **/__pycache__
+
+# Secrets
 *.env
+
+# DVC Ignores
+/.dvc/cache
+/.dvc/config.local
+Datasets/data/
