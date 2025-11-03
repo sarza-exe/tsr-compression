@@ -1,10 +1,10 @@
 from torch.utils.data import DataLoader
-from Datasets.sources.GTSRB import GTSRB
+# from Datasets.sources.GTSRB import GTSRB
+from torchvision.datasets import GTSRB
 import torchvision.transforms as transform
 from Datasets.Augmentation.showAugmentation import showBatch
 
-# Path to the GTSRB dataset folder
-root = "../data/GTSRB"
+root = ("data/GTSRB")
 
 # Resize images to 32x32, convert to tensor, and normalize pixel values
 train_transforms = transform.Compose([
@@ -13,7 +13,6 @@ train_transforms = transform.Compose([
     transform.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
 ])
 
-# Apply the same preprocessing for validation/test data
 val_transforms = transform.Compose([
     transform.Resize((32, 32)),
     transform.ToTensor(),
