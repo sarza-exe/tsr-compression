@@ -1,11 +1,15 @@
 import os
+import sys
 import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from Architectures.cnn_6x2 import SimpleCNN_6x2
 from data_original import train_loader, val_loader
-from utils import train_one_epoch, validate
+from train_utils import train_one_epoch, validate
 
 SEED = 42
 torch.manual_seed(SEED)
@@ -14,8 +18,8 @@ random.seed(SEED)
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-MODELS_DIR = "./Models"
-os.makedirs(MODELS_DIR, exist_ok=True)
+MODELS_DIR = "../Models"
+# os.makedirs(MODELS_DIR, exist_ok=True)
 MODEL_PATH = os.path.join(MODELS_DIR, "cnn6x2_best.pt")
 
 NUM_CLASSES = 43           # GTSRB dataset has 43 traffic sign classes
