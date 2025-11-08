@@ -1,0 +1,5 @@
+**/GTSDB_dataset
+**/GTSDB_YOLO
+**/runs
+*.pt
+*.ptl
