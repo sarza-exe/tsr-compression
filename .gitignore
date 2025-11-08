@@ -12,5 +12,5 @@
 # Secrets
 *.env
 
-# DVC Ignores
+# Datasets Ignores
 Datasets/data/
