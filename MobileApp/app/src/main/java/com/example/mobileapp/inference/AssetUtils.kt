@@ -11,7 +11,7 @@ object AssetUtils {
      * Kopiuje asset z katalogu `assets` do internal files dir aplikacji i zwraca absolutną ścieżkę do skopiowanego pliku.
      *
      * @param context Context aplikacji / activity
-     * @param assetName Ścieżka do assetu w katalogu assets, np. "models/gtsdb_yolo_416.ptl"
+     * @param assetName Ścieżka do assetu w katalogu assets, np. "models/name.ptl"
      * @return absolutna ścieżka do skopiowanego pliku w internal storage
      * @throws IOException jeśli kopiowanie się nie powiedzie
      */

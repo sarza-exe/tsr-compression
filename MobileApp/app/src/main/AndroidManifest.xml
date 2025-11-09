@@ -27,6 +27,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.example.mobileapp.ui.main.CameraCaptureActivity" />
+        <activity android:name="com.example.mobileapp.ui.main.ResultActivity" />
     </application>
 
 </manifest>

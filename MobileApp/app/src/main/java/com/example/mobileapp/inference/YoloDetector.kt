@@ -25,7 +25,7 @@ class YoloDetector(context: Context) {
 
     companion object {
         private const val TAG = "YoloDetector"
-        private const val MODEL_ASSET_PATH = "models/gtsdb_yolo_416.ptl"
+        private const val MODEL_ASSET_PATH = "models/gtsdb_yolo_416_3.ptl"
         private const val INPUT_SIZE = 416                       // model input H/W
         private const val PAD_COLOR = 114                        // letterbox pad RGB value (114,114,114)
         private const val DEFAULT_CONF_THRESHOLD = 0.25f
@@ -69,7 +69,51 @@ class YoloDetector(context: Context) {
 
         // 3) forward
         val outputTensor: Tensor = module.forward(IValue.from(inputTensor)).toTensor()
+
+        // after val outputTensor: Tensor = module.forward(IValue.from(inputTensor)).toTensor()
+        val shape = outputTensor.shape() // LongArray
+        Log.i("YoloDebug", "outputTensor.shape = ${shape.joinToString(",")}")
+
+// If it's a 2D/3D tensor, try to print first row(s) nicely
+        try {
+            val outArray = outputTensor.dataAsFloatArray
+            Log.i("YoloDebug", "outArray.len=${outArray.size}")
+            // If we can infer dims: attempt rows = outArray.size / shape.last()
+            val lastDim = if (shape.isNotEmpty()) shape.last().toInt() else -1
+            if (lastDim > 0) {
+                val rows = outArray.size / lastDim
+                Log.i("YoloDebug", "Inferred rows=$rows, cols=$lastDim")
+                val previewRows = minOf(rows, 5)
+                for (r in 0 until previewRows) {
+                    val sb = StringBuilder()
+                    for (c in 0 until lastDim) {
+                        val v = outArray[r * lastDim + c]
+                        sb.append(String.format("%.4f ", v))
+                    }
+                    Log.i("YoloDebug", "row[$r]: $sb")
+                }
+            } else {
+                // fallback preview
+                val previewCount = minOf(outArray.size, 60)
+                val sb = StringBuilder()
+                for (k in 0 until previewCount) sb.append(String.format("%.4f ", outArray[k]))
+                Log.i("YoloDebug", "outArray preview: $sb")
+            }
+        } catch (e: Exception) {
+            Log.w("YoloDebug", "Could not dump output tensor: ${e.message}")
+        }
+
         val outArray = outputTensor.dataAsFloatArray
+
+        Log.i("YoloDebug", "outArray.len=${outArray.size}")
+        // print first 30 values (or all if small)
+        val previewCount = minOf(outArray.size, 30)
+        val sb = StringBuilder()
+        for (k in 0 until previewCount) {
+            sb.append(String.format("%.4f ", outArray[k]))
+        }
+        Log.i("FEFREOGHREOHGOREGHROEGYoloDebug", "outArray preview: $sb")
+
 
         // 4) parse output (flattened N x 6)
         val detections = mutableListOf<Detection>()

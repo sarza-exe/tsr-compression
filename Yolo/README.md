@@ -8,5 +8,5 @@
 
 `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121`
 
-- Odpalić export.py
+- Odpalić exportNMS.py
 - plik gtsdb_yolo_416.ptl zawiera gotowy model na smartfony (Bez NMS)

@@ -1,3 +1,8 @@
+"""
+Generuje plik .ptl dla PyTorch Mobile Lit
+Ten export zwraca model o kształcie (1, 5, 3549) bez nms
+"""
+
 import torch
 from ultralytics import YOLO
 from torch.utils.mobile_optimizer import optimize_for_mobile
