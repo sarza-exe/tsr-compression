@@ -7,36 +7,63 @@ import torch.optim as optim
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from Architectures.cnn_6x2 import SimpleCNN_6x2
+# from Architectures.cnn_6x2 import SimpleCNN_6x2 as Model
+from Architectures.enhanced_lenet5 import EnhancedLeNet5 as Model
+# from Architectures.resnet50_custom import ResNet50Custom as Model
+# from Architectures.efficientnet_b0_custom import EfficientNetB0Custom as Model
 from data_original import train_loader, val_loader
 from train_utils import train_one_epoch, validate
+
+
+MODELS_DIR = "../Models"
+os.makedirs(MODELS_DIR, exist_ok=True)
+
+MODEL_NAME = "enhanced_lenet5_best.pt"
+MODEL_PATH = os.path.join(MODELS_DIR, MODEL_NAME)
+
+TRAINING_MODE = 'new'    # 'new' / 'resume'
+
 
 SEED = 42
 torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
 random.seed(SEED)
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-MODELS_DIR = "../Models"
-# os.makedirs(MODELS_DIR, exist_ok=True)
-MODEL_PATH = os.path.join(MODELS_DIR, "cnn6x2_best.pt")
-
 NUM_CLASSES = 43           # GTSRB dataset has 43 traffic sign classes
-LR = 1e-3                  # Learning rate for optimizer
+LR = 1e-3                  # Learning rate for new model
+LR_RESUME = 1e-4           # smaller Learning rate for continuation
 WEIGHT_DECAY = 1e-4        # Weight decay for L2 regularization
 EPOCHS = 30                # Number of epochs to train
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main():
 
-    model = SimpleCNN_6x2(num_classes=NUM_CLASSES).to(DEVICE)
+    model = Model(num_classes=NUM_CLASSES).to(DEVICE)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=3)
 
+    start_epoch = 1
     best_val_acc = 0.0
-    for epoch in range(1, EPOCHS + 1):
+
+    if TRAINING_MODE == 'resume' and os.path.exists(MODEL_PATH):
+        print(f"Resuming training from checkpoint: {MODEL_PATH}")
+        checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
+        best_val_acc = checkpoint.get('val_acc', 0.0)
+
+        # smaller learning rate to avoid destabilizing the model
+        for g in optimizer.param_groups:
+            g['lr'] = LR_RESUME
+
+        print(f"Resumed from epoch {start_epoch} with best val acc {best_val_acc:.4f}")
+    else:
+        print("Starting new training from scratch.")
+
+    for epoch in range(start_epoch, EPOCHS + 1):
         print(f"\nEpoch {epoch}/{EPOCHS}")
         train_loss, train_acc = train_one_epoch(model, train_loader, optimizer, criterion, DEVICE)
         val_loss, val_acc = validate(model, val_loader, criterion, DEVICE)

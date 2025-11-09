@@ -1,10 +1,11 @@
+import os
 from torch.utils.data import DataLoader
 # from Datasets.sources.GTSRB import GTSRB
 from torchvision.datasets import GTSRB
 import torchvision.transforms as transform
 from Datasets.Augmentation.showAugmentation import showBatch
 
-root = ("data/GTSRB")
+root = os.path.join(os.path.dirname(__file__), "data", "GTSRB")
 
 # Resize images to 32x32, convert to tensor, and normalize pixel values
 train_transforms = transform.Compose([
