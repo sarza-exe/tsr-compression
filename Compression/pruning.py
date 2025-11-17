@@ -72,7 +72,7 @@ def run_experiment(ModelClass):
             # Collect metrics
             params = count_params(model)
             flops = count_flops(model)
-            latency = measure_latency(model, device="cpu")
+            latency = measure_latency(model, device="cuda" if torch.cuda.is_available() else "cpu")
 
             # Save pruned model
             save_path = os.path.join(SAVE_DIR, f"pruned_{ModelClass.__name__}_{pruning_type}_{amount}.pt")

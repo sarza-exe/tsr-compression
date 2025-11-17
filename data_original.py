@@ -21,8 +21,8 @@ val_transforms = transform.Compose([
 ])
 
 # Load the GTSRB training and validation/testing dataset using the defined transforms
-train_dataset = GTSRB(root=root, split='train', transform=train_transforms)
-val_dataset = GTSRB(root=root, split='test', transform=val_transforms)
+train_dataset = GTSRB(root=root, split='train', transform=train_transforms, download=True)
+val_dataset = GTSRB(root=root, split='test', transform=val_transforms, download=True)
 
 # Create DataLoader for the training dataset (shuffled for randomness) and validation dataset (not shuffled)
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)

@@ -13,10 +13,10 @@ from Architectures.resnet50_custom import ResNet50Custom
 from Architectures.efficientnet_b0_custom import EfficientNetB0Custom
 
 # List of models to test
-models = [SimpleCNN_6x2, EnhancedLeNet5, ResNet50Custom, EfficientNetB0Custom]
+models = [ResNet50Custom, EfficientNetB0Custom]
 
 # Directory for saving results CSV
-RESULTS_DIR = "../Results"
+RESULTS_DIR = "Results"
 os.makedirs(RESULTS_DIR, exist_ok=True)
 CSV_PATH = os.path.join(RESULTS_DIR, "compression_results.csv")
 
