@@ -39,11 +39,12 @@ import java.io.InputStream
 
 class MainActivity : ComponentActivity() {
 
+    // Activity result to pick image
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let { handleImageUri(it) }
     }
 
-    // Zakladamy ze CameraCaptureActivity zwraca Intent z "photo_uri" (String)
+    // Assume CameraCaptureActivity returns Intent with "photo_uri" String extra
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data = result.data
@@ -56,12 +57,25 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // stan UI
+    // UI state backed by Compose-friendly mutableStateOf
     private var selectedImageUri by mutableStateOf<Uri?>(null)
     private var isProcessing by mutableStateOf(false)
 
+    // Detector — load once
+    private lateinit var detector: com.example.mobileapp.inference.YoloDetector
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Load detector once (may take time) — do it in background to avoid ANR
+        lifecycleScope.launch {
+            try {
+                detector = com.example.mobileapp.inference.YoloDetector(applicationContext)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                Toast.makeText(this@MainActivity, "Failed to load YOLO detector: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
 
         setContent {
             MobileAppTheme {
@@ -71,14 +85,11 @@ class MainActivity : ComponentActivity() {
                         isProcessing = isProcessing,
                         onPickFromGallery = { pickImageLauncher.launch("image/*") },
                         onOpenCamera = {
-                            // uruchom CameraCaptureActivity
                             val intent = Intent(this, CameraCaptureActivity::class.java)
                             cameraLauncher.launch(intent)
                         },
                         onProcessSelected = {
-                            selectedImageUri?.let { uri ->
-                                startDetectionFlow(uri)
-                            } ?: run {
+                            selectedImageUri?.let { uri -> startDetectionFlow(uri) } ?: run {
                                 Toast.makeText(this@MainActivity, "No image selected", Toast.LENGTH_SHORT).show()
                             }
                         }
@@ -89,28 +100,37 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleImageUri(uri: Uri) {
-        // ustaw podgląd i automatycznie uruchom przetwarzanie (albo poczekaj na przycisk: tutaj automatycznie)
+        // show preview and start processing automatically
         selectedImageUri = uri
         startDetectionFlow(uri)
     }
 
     private fun startDetectionFlow(uri: Uri) {
-        // Nie blokuj UI thread
         lifecycleScope.launch {
             isProcessing = true
-            val bmp = withContext(Dispatchers.IO) { decodeBitmapFromUri(this@MainActivity.contentResolver, uri, maxDim = 1280) }
-            if (bmp == null) {
-                Toast.makeText(this@MainActivity, "Nie można wczytać obrazu", Toast.LENGTH_SHORT).show()
-                isProcessing = false
-                return@launch
-            }
-
-            // W tym miejscu próbujemy uruchomić detekcję YOLO.
-            // mamy  klasę YoloDetector z metodą detect(bitmap): List<Detection>
             try {
-                val detector = com.example.mobileapp.inference.YoloDetector(applicationContext)
+                val bmp = withContext(Dispatchers.IO) { decodeBitmapFromUri(contentResolver, uri, maxDim = 1280) }
+                if (bmp == null) {
+                    Toast.makeText(this@MainActivity, "Cannot load image", Toast.LENGTH_SHORT).show()
+                    isProcessing = false
+                    return@launch
+                }
+
+                // Ensure detector is initialized
+                if (!::detector.isInitialized) {
+                    try {
+                        detector = com.example.mobileapp.inference.YoloDetector(applicationContext)
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                        Toast.makeText(this@MainActivity, "YOLO detector failed to initialize: ${e.message}", Toast.LENGTH_LONG).show()
+                        isProcessing = false
+                        return@launch
+                    }
+                }
+
+                // Run detection on background thread
                 val detections = withContext(Dispatchers.Default) {
-                    // dostosowac inputSize/confThreshold jeśli trzeba
+                    // you can pass thresholds if your detect supports parameters
                     detector.detect(bmp)
                 }
 
@@ -120,13 +140,13 @@ class MainActivity : ComponentActivity() {
                     return@launch
                 }
 
-                // wybierz detekcję z najwyższym score
+                // choose best detection by score
                 val best = detections.maxByOrNull { it.score }!!
 
-                // przelicz współrzędne jeśli detekcje były w skali inputSize -> tutaj zakładamy że są w pikselach oryginalnego obrazu
+                // crop safely in original image coordinates
                 val cropped = cropBitmapSafe(bmp, best.x1, best.y1, best.x2, best.y2)
 
-                // zapisz wycięty znak do cache i przekieruj do ResultActivity
+                // save cropped image to cache
                 val savedUri = withContext(Dispatchers.IO) { saveBitmapToCache(this@MainActivity, cropped) }
                 if (savedUri == null) {
                     Toast.makeText(this@MainActivity, "Failed to save cropped sign", Toast.LENGTH_SHORT).show()
@@ -134,18 +154,13 @@ class MainActivity : ComponentActivity() {
                     return@launch
                 }
 
-                // uruchom ResultActivity
+                // start ResultActivity and pass crop uri
                 val intent = Intent(this@MainActivity, ResultActivity::class.java).apply {
-                    putExtra("crop_uri", savedUri.toString())
+                    putExtra(ResultActivity.EXTRA_CROP_URI, savedUri.toString())
                 }
                 startActivity(intent)
 
-            } catch (e: ClassNotFoundException) {
-                // YoloDetector nie istnieje jeszcze w projekcie
-                Toast.makeText(this@MainActivity, "YOLO detector not available yet. Add com.example.mobileapp.inference.YoloDetector", Toast.LENGTH_LONG).show()
             } catch (e: Throwable) {
-                // inny błąd podczas detekcji
-                // an operation is not impelemented rzuca yolodetector.kt
                 e.printStackTrace()
                 Toast.makeText(this@MainActivity, "Error during detection: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
             } finally {
@@ -154,7 +169,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // --- pomocnicze funkcje ---
+    // --- helpers ---
 
     private fun cropBitmapSafe(bitmap: Bitmap, xf: Float, yf: Float, x2f: Float, y2f: Float): Bitmap {
         val left = xf.toInt().coerceIn(0, bitmap.width - 1)
@@ -183,7 +198,6 @@ class MainActivity : ComponentActivity() {
 
     private fun decodeBitmapFromUri(contentResolver: ContentResolver, uri: Uri, maxDim: Int = 1280): Bitmap? {
         try {
-            // Najpierw odczyt rozmiarów
             val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             var input: InputStream? = null
             try {
@@ -193,15 +207,11 @@ class MainActivity : ComponentActivity() {
                 input?.close()
             }
 
-            // oblicz inSampleSize
             val (width, height) = options.outWidth to options.outHeight
             var inSampleSize = 1
             val largest = maxOf(width, height)
             if (largest > maxDim) {
-                inSampleSize = 1
-                while (largest / inSampleSize > maxDim) {
-                    inSampleSize *= 2
-                }
+                while (largest / inSampleSize > maxDim) inSampleSize *= 2
             }
 
             val decodeOptions = BitmapFactory.Options().apply { this.inSampleSize = inSampleSize }
@@ -241,7 +251,6 @@ fun MainScreen(
         Text(text = "Traffic Sign Tester", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Buttons
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Button(onClick = onPickFromGallery, modifier = Modifier.weight(1f)) {
                 Text("Recognise sign from gallery")
@@ -254,7 +263,6 @@ fun MainScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // podgląd wybranego obrazka
         if (selectedImageUri != null) {
             Box(modifier = Modifier
                 .fillMaxWidth()
