@@ -18,9 +18,9 @@ from metrics_utils import count_params, count_flops, measure_latency, get_input_
 from slimming_utils import physically_prune_structured, make_pruning_permanent
 
 # --- Configuration ---
-INPUT_DIR: str = "../Compressed_Models/Normal"
-OUTPUT_DIR: str = "../Compressed_Models/Slimmed35"
-CSV_FILE: str = "../Results/pruning_results35.csv"
+INPUT_DIR: str = "../Compressed_Models/Pruned_normal"
+OUTPUT_DIR: str = "../Compressed_Models/Pruned_slimmed"
+CSV_FILE: str = "../Results/pruning_results.csv"
 SAVE_SUFFIX: str = "_slimmed"
 DEVICE: str = "cpu"
 NUM_CLASSES: int = 43
@@ -75,7 +75,7 @@ def main():
             ratio_match = re.findall(r"0\.\d+", filename)
             amount = float(ratio_match[-1]) if ratio_match else 0.0
 
-            print(f"🔄 Processing: {model_name} | {method} | {amount}")
+            print(f"Processing: {model_name} | {method} | {amount}")
 
             # --- Load Model ---
             ModelClass = MODEL_MAPPING[model_name]
@@ -123,14 +123,14 @@ def main():
                 'val_acc': val_acc
             }, save_path)
 
-            print(f"   ✅ Saved to: {save_path}")
-            print(f"      Params: {params / 1e6:.2f}M | Latency: {latency * 1000:.2f}ms")
+            print(f"   Saved to: {save_path}")
+            print(f"   Params: {params / 1e6:.2f}M | Latency: {latency * 1000:.2f}ms")
 
         except Exception as e:
-            print(f"   ❌ Error processing {filename}: {e}")
+            print(f"    Error processing {filename}: {e}")
 
     csv_file.close()
-    print(f"\n🎉 Processing finished. Results saved to {OUTPUT_DIR}")
+    print(f"\nProcessing finished. Results saved to {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":
