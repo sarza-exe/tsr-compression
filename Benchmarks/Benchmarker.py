@@ -7,39 +7,37 @@ import torch.nn.utils.prune as prune
 
 # --- Path Setup ---
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Compression')))
 
-# Model architectures:
+# Model architectures
 from Architectures.cnn_6x2 import SimpleCNN_6x2
 from Architectures.efficientnet_b0_custom import EfficientNetB0Custom
 from Architectures.enhanced_lenet5 import EnhancedLeNet5
 from Architectures.resnet50_custom import ResNet50Custom
 
 
-# --- 2. USER: Import Your Helper Functions ---
-from data_original import val_loader  # Assumes this has the GTSRB val_loader
+# Importing Helper Functions
+from data_original import val_loader
 from Training.train_utils import validate
-from Compression.metrics_utils import count_params, count_flops, measure_latency
+from Compression.metrics_utils import count_params, count_flops, measure_latency, get_input_size
+from Compression.slimming_utils import physically_prune_structured, make_pruning_permanent
 
-# --- 3. USER: Configure Your Model Registry ---
-# Match the class name (string) to the imported class
+# Model registry
 MODEL_CLASSES = {
-    # "YourModelClass1": YourModelClass1,
-    # "YourModelClass2": YourModelClass2,
-    # "LeNet": LeNet, # Example
-    "CNN_6x2": SimpleCNN_6x2,
-    "EfficientNetB0": EfficientNetB0Custom,
+    "SimpleCNN_6x2": SimpleCNN_6x2,
+    "EfficientNetB0Custom": EfficientNetB0Custom,
     "EnhancedLeNet5" : EnhancedLeNet5,
-    "ResNet50": ResNet50Custom,
+    "ResNet50Custom": ResNet50Custom,
 }
 
 # --- Constants ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ORIGINAL_MODELS_DIR = "../Models"
-PRUNED_MODELS_DIR = "../Compressed_Models"
+PRUNED_MODELS_DIR = "../Compressed_Models/Pruned_normal"
 NUM_CLASSES = 43  # For GTSRB
 
 
-# --- Pruning helper functions (copied from your script) ---
+# --- Pruning helper functions ---
 def apply_unstructured(model, amount):
     for name, module in model.named_modules():
         if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
@@ -62,7 +60,6 @@ def run_benchmark(model, val_loader, criterion, device):
         _, val_acc = validate(model, val_loader, criterion, device)
 
     # Run metrics
-    # Note: count_params should count *non-zero* params
     params = count_params(model)
     flops = count_flops(model)
 
@@ -155,9 +152,13 @@ def main():
         try:
             # Parse filename: pruned_LeNet_unstructured_0.3.pt
             parts = filename.replace(".pt", "").split("_")
-            model_name = parts[1]
-            pruning_type = parts[2]
-            amount = float(parts[3])
+
+            amount = float(parts[-1])
+            pruning_type = parts[-2]
+
+            # Connect together the names that were divided by '_' (like SimpleCNN_6x2)
+            model_name = "_".join(parts[1:-2])
+
         except Exception as e:
             print(f"Warning: Skipping {filename}, could not parse name. Error: {e}")
             continue
@@ -170,7 +171,6 @@ def main():
         model = ModelClass(num_classes=NUM_CLASSES).to(DEVICE)
 
         # --- CRITICAL STEP: Apply pruning *before* loading state_dict ---
-        # This re-parameterizes the model to have 'weight_orig' and 'weight_mask'
         if pruning_type == "unstructured":
             apply_unstructured(model, amount)
         elif pruning_type == "structured":
@@ -179,26 +179,35 @@ def main():
             print(f"Warning: Skipping {filename}, unknown pruning type '{pruning_type}'.")
             continue
 
-        # Load the saved state dict (weights and masks)
+        # Load and Clean Checkpoint
         checkpoint = torch.load(file_path, map_location=DEVICE)
-        model.load_state_dict(checkpoint["model_state_dict"])
+        state_dict = checkpoint["model_state_dict"]
+        keys_to_remove = [k for k in state_dict.keys() if "total_ops" in k or "total_params" in k]
+        for k in keys_to_remove: del state_dict[k]
+
+        model.load_state_dict(state_dict, strict=False)
+
 
         # --- CRITICAL STEP: Make pruning permanent ---
-        # This removes the pruning "hooks" and bakes the 0s into the weights
-        # This is essential for count_params and latency tests
-        for name, module in model.named_modules():
-            if isinstance(module, (nn.Conv2d, nn.Linear)):
-                if prune.is_pruned(module):
-                    prune.remove(module, 'weight')
+        make_pruning_permanent(model)
 
-        # Run benchmarks on the finalized pruned model
-        metrics = run_benchmark(model, val_loader, criterion, DEVICE)
-        metrics.update({
-            "model": model_name,
-            "method": pruning_type.capitalize(),
-            "amount": amount
-        })
-        results.append(metrics)
+        method = "structured" if "structured" in filename and "unstructured" not in filename else "unstructured"
+
+        if method == "structured":
+            input_size = get_input_size(model)
+            # Physical removal of channels (requires correct input size)
+            model = physically_prune_structured(model, pruning_ratio=amount, example_input_size=input_size)
+
+        try:
+            metrics = run_benchmark(model, val_loader, criterion, DEVICE)
+            metrics.update({
+                "model": model_name,
+                "method": pruning_type.capitalize(),
+                "amount": amount
+            })
+            results.append(metrics)
+        except Exception as e:
+            print(f"Error benchmarking {filename}: {e}")
 
     # --- 3. Generate Report ---
     if results:
