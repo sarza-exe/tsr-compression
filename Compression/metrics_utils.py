@@ -11,8 +11,11 @@ INPUT_SIZES = {
 
 def get_input_size(model):
     model_name = model.__class__.__name__
-    input_size = INPUT_SIZES[model_name]
-    return input_size
+
+    if model_name == "QuantizedModelWrapper":
+        model_name = model.model.__class__.__name__
+
+    return INPUT_SIZES.get(model_name, (1, 3, 32, 32))
 
 def count_params(model):
     return sum(torch.count_nonzero(p).item() for p in model.parameters())
