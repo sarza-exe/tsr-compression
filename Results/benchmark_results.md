@@ -1,34 +1,40 @@
-## Benchmark Report
+# Unified Compression Benchmark Results: GTSRB
 
-Models benchmarked against GTSRB validation set.
-
-| Model                | Method       | Pruning % | Val. Acc.  | Params (M) | FLOPs (G) | Latency (ms) |
-|:---------------------|:-------------|:----------|:-----------|:-----------|:----------|:-------------|
-| SimpleCNN_6x2        | Original     | N/A       | **98.87%** | 5.94M      | 0.18G     | 18.692ms     |
-| SimpleCNN_6x2        | Unstructured | 50%       | **98.52%** | 2.97M      | 0.18G     | 4.876ms      |
-| SimpleCNN_6x2        | Unstructured | 70%       | **98.36%** | 1.78M      | 0.18G     | 4.957ms      |
-| SimpleCNN_6x2        | Unstructured | 30%       | **98.15%** | 4.16M      | 0.18G     | 5.381ms      |
-| SimpleCNN_6x2        | Structured   | 30%       | **98.01%** | 2.90M      | 0.09G     | 4.386ms      |
-| SimpleCNN_6x2        | Structured   | 50%       | **97.20%** | 1.49M      | 0.04G     | 2.745ms      |
-| EnhancedLeNet5       | Unstructured | 50%       | **96.94%** | 0.56M      | 0.02G     | 7.346ms      |
-| EnhancedLeNet5       | Unstructured | 30%       | **96.93%** | 0.78M      | 0.02G     | 7.390ms      |
-| EnhancedLeNet5       | Original     | N/A       | **96.90%** | 1.11M      | 0.02G     | 5.634ms      |
-| EnhancedLeNet5       | Unstructured | 70%       | **96.35%** | 0.33M      | 0.02G     | 7.675ms      |
-| EnhancedLeNet5       | Structured   | 30%       | **95.44%** | 0.54M      | 0.01G     | 6.739ms      |
-| ResNet50Custom       | Original     | N/A       | **94.54%** | 23.60M     | 4.13G     | 1238.966ms   |
-| ResNet50Custom       | Unstructured | 50%       | **93.99%** | 11.82M     | 4.13G     | 394.766ms    |
-| ResNet50Custom       | Unstructured | 30%       | **93.86%** | 16.53M     | 4.13G     | 2573.449ms   |
-| ResNet50Custom       | Unstructured | 70%       | **93.33%** | 7.12M      | 4.13G     | 125.717ms    |
-| ResNet50Custom       | Structured   | 30%       | **92.98%** | 10.77M     | 2.04G     | 2048.370ms   |
-| ResNet50Custom       | Structured   | 50%       | **92.25%** | 5.37M      | 1.07G     | 948.614ms    |
-| EnhancedLeNet5       | Structured   | 50%       | **92.20%** | 0.28M      | 0.00G     | 5.102ms      |
-| EfficientNetB0Custom | Original     | N/A       | **92.19%** | 4.06M      | 0.41G     | 152.050ms    |
-| EfficientNetB0Custom | Unstructured | 30%       | **91.48%** | 2.86M      | 0.41G     | 207.816ms    |
-| EfficientNetB0Custom | Unstructured | 50%       | **90.14%** | 2.06M      | 0.41G     | 237.528ms    |
-| SimpleCNN_6x2        | Structured   | 70%       | **87.78%** | 0.53M      | 0.02G     | 1.798ms      |
-| ResNet50Custom       | Structured   | 70%       | **87.65%** | 1.89M      | 0.40G     | 371.356ms    |
-| EnhancedLeNet5       | Structured   | 70%       | **86.23%** | 0.10M      | 0.00G     | 6.348ms      |
-| EfficientNetB0Custom | Unstructured | 70%       | **85.84%** | 1.25M      | 0.41G     | 179.080ms    |
-| EfficientNetB0Custom | Structured   | 30%       | **49.46%** | 1.89M      | 0.22G     | 112.987ms    |
-| EfficientNetB0Custom | Structured   | 50%       | **12.81%** | 0.96M      | 0.12G     | 94.872ms     |
-| EfficientNetB0Custom | Structured   | 70%       | **2.53%**  | 0.35M      | 0.05G     | 74.843ms     |
+| Model              | Method            | Compression | Val. Acc.  | Complexity (Params/Size) | Latency (ms) |
+|:-------------------|:------------------|:------------|:-----------|:-------------------------|:-------------|
+| **SimpleCNN_6x2**  | **Original**      | N/A         | **98.87%** | 5.94 M                   | 18.69        |
+| SimpleCNN_6x2      | Quant. (Dynamic)  | INT8        | **98.84%** | 10.60 MB                 | 13.28        |
+| SimpleCNN_6x2      | Quant. (Static)   | INT8        | **98.73%** | 5.70 MB                  | **5.56**     |
+| SimpleCNN_6x2      | Pruning (Unstr.)  | 50%         | **98.52%** | 2.97 M                   | 4.88         |
+| SimpleCNN_6x2      | Pruning (Unstr.)  | 70%         | **98.36%** | 1.78 M                   | 4.96         |
+| SimpleCNN_6x2      | Pruning (Unstr.)  | 30%         | **98.15%** | 4.16 M                   | 5.38         |
+| SimpleCNN_6x2      | Pruning (Struct.) | 30%         | **98.01%** | 2.90 M                   | 4.39         |
+| SimpleCNN_6x2      | Pruning (Struct.) | 50%         | **97.20%** | 1.49 M                   | **2.75**     |
+| EnhancedLeNet5     | Pruning (Unstr.)  | 50%         | **96.94%** | 0.56 M                   | 7.35         |
+| EnhancedLeNet5     | Pruning (Unstr.)  | 30%         | **96.93%** | 0.78 M                   | 7.39         |
+| EnhancedLeNet5     | Quant. (Dynamic)  | INT8        | **96.90%** | 1.23 MB                  | 2.12         |
+| **EnhancedLeNet5** | **Original**      | N/A         | **96.90%** | 1.11 M                   | 5.63         |
+| EnhancedLeNet5     | Quant. (Static)   | INT8        | **96.51%** | 1.08 MB                  | **1.16**     |
+| EnhancedLeNet5     | Pruning (Unstr.)  | 70%         | **96.35%** | 0.33 M                   | 7.68         |
+| EnhancedLeNet5     | Pruning (Struct.) | 30%         | **95.44%** | 0.54 M                   | 6.74         |
+| ResNet50Custom     | Quant. (Dynamic)  | INT8        | **94.55%** | 90.07 MB                 | 559.67       |
+| **ResNet50Custom** | **Original**      | N/A         | **94.54%** | 23.60 M                  | 1238.97      |
+| ResNet50Custom     | Pruning (Unstr.)  | 50%         | **93.99%** | 11.82 M                  | 394.77       |
+| ResNet50Custom     | Pruning (Unstr.)  | 30%         | **93.86%** | 16.53 M                  | 2573.45      |
+| ResNet50Custom     | Pruning (Unstr.)  | 70%         | **93.33%** | 7.12 M                   | 125.72       |
+| ResNet50Custom     | Pruning (Struct.) | 30%         | **92.98%** | 10.77 M                  | 2048.37      |
+| ResNet50Custom     | Pruning (Struct.) | 50%         | **92.25%** | 5.37 M                   | 948.61       |
+| **EfficientNetB0** | **Original**      | N/A         | **92.19%** | 4.06 M                   | 152.05       |
+| EnhancedLeNet5     | Pruning (Struct.) | 50%         | **92.20%** | 0.28 M                   | 5.10         |
+| EfficientNetB0     | Quant. (Dynamic)  | INT8        | **92.17%** | 15.64 MB                 | 79.08        |
+| EfficientNetB0     | Pruning (Unstr.)  | 30%         | **91.48%** | 2.86 M                   | 207.82       |
+| EfficientNetB0     | Pruning (Unstr.)  | 50%         | **90.14%** | 2.06 M                   | 237.53       |
+| SimpleCNN_6x2      | Pruning (Struct.) | 70%         | **87.78%** | 0.53 M                   | 1.80         |
+| ResNet50Custom     | Pruning (Struct.) | 70%         | **87.65%** | 1.89 M                   | 371.36       |
+| EnhancedLeNet5     | Pruning (Struct.) | 70%         | **86.23%** | 0.10 M                   | 6.35         |
+| EfficientNetB0     | Pruning (Unstr.)  | 70%         | **85.84%** | 1.25 M                   | 179.08       |
+| EnhancedLeNet5     | Quant. (QAT)      | INT8        | **69.52%** | 1.08 MB                  | 1.23         |
+| EfficientNetB0     | Pruning (Struct.) | 30%         | **49.46%** | 1.89 M                   | 112.99       |
+| SimpleCNN_6x2      | Quant. (QAT)      | INT8        | **28.43%** | 5.73 MB                  | 6.89         |
+| EfficientNetB0     | Pruning (Struct.) | 50%         | **12.81%** | 0.96 M                   | 94.87        |
+| EfficientNetB0     | Pruning (Struct.) | 70%         | **2.53%**  | 0.35 M                   | 74.84        |
