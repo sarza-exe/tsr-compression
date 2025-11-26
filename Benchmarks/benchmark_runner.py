@@ -68,7 +68,7 @@ def main():
                     "Model": model_name,
                     "Method": "**Original**",
                     "Compression": "N/A",
-                    "Val. accuracy": acc * 100,
+                    "Val. accuracy": f"{acc * 100:.2f}%",
                     "Num of params (M)": f"{params / 1e6:.2f}",
                     "Size (MB)": f"{size_mb:.2f}",
                     "Latency (ms)": f"{lat:.2f}"
@@ -114,7 +114,7 @@ def main():
                     "Model": model_name,
                     "Method": f"Pruning ({method.capitalize()})",
                     "Compression": f"{amount * 100:.0f}%",
-                    "Val. accuracy": acc * 100,
+                    "Val. accuracy": f"{acc * 100:.2f}%",
                     "Num of params (M)": f"{params / 1e6:.2f}",
                     "Size (MB)": f"{size_mb:.2f}",
                     "Latency (ms)": f"{lat:.2f}"
@@ -153,7 +153,7 @@ def main():
                     "Model": model_name,
                     "Method": f"Quantization ({method})",
                     "Compression": "INT8",
-                    "Val. accuracy": acc * 100,
+                    "Val. accuracy": f"{acc * 100:.2f}%",
                     "Num of params (M)": params_str,
                     "Size (MB)": f"{size_mb:.2f}",
                     "Latency (ms)": f"{lat:.2f}"
