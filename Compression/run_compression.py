@@ -22,10 +22,9 @@ models = [SimpleCNN_6x2, EnhancedLeNet5, ResNet50Custom, EfficientNetB0Custom]
 # Directory for saving results CSV
 RESULTS_DIR = "../Results"
 os.makedirs(RESULTS_DIR, exist_ok=True)
-CSV_PATH = os.path.join(RESULTS_DIR, "compression_results_1.csv")
+CSV_PATH = os.path.join(RESULTS_DIR, "compression_results.csv")
 
 
-# Main loop: run compression for all models
 if __name__ == "__main__":
     all_results = []
 

@@ -6,10 +6,10 @@ import re
 import csv
 from typing import Dict, Type
 
-# --- Path Setup ---
+# Path Setup
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# --- Architecture Imports ---
+# Architecture Imports
 from Architectures.cnn_6x2 import SimpleCNN_6x2
 from Architectures.enhanced_lenet5 import EnhancedLeNet5
 from Architectures.resnet50_custom import ResNet50Custom
@@ -17,7 +17,7 @@ from Architectures.efficientnet_b0_custom import EfficientNetB0Custom
 from metrics_utils import count_params, count_flops, measure_latency, get_input_size
 from slimming_utils import physically_prune_structured, make_pruning_permanent
 
-# --- Configuration ---
+# Configuration
 INPUT_DIR: str = "../Compressed_Models/Pruned_normal"
 OUTPUT_DIR: str = "../Compressed_Models/Pruned_slimmed"
 CSV_FILE: str = "../Results/pruning_results.csv"
@@ -37,9 +37,6 @@ MODEL_MAPPING: Dict[str, Type[nn.Module]] = {
     "EfficientNetB0Custom": EfficientNetB0Custom
 }
 
-
-
-# --- MAIN EXECUTION ---
 
 def main():
     if not os.path.exists(INPUT_DIR):
@@ -67,7 +64,7 @@ def main():
         filepath = os.path.join(INPUT_DIR, filename)
 
         try:
-            # --- Parse Filename Info ---
+            # Parse Filename Info
             model_name = next((name for name in MODEL_MAPPING if name in filename), None)
             if not model_name: continue
 
@@ -77,7 +74,7 @@ def main():
 
             print(f"Processing: {model_name} | {method} | {amount}")
 
-            # --- Load Model ---
+            # Load Model
             ModelClass = MODEL_MAPPING[model_name]
             model = ModelClass(num_classes=NUM_CLASSES)
 
@@ -91,27 +88,27 @@ def main():
 
             model.load_state_dict(state_dict, strict=False)
 
-            # --- Clean / Slim Model ---
+            # Clean / Slim Model
             if method == "structured":
-                # Physical removal of channels (requires correct input size)
+                # Physical removal of channels
                 model = physically_prune_structured(model, pruning_ratio=amount, example_input_size=input_size)
             else:
                 # Making zero weights permanent
                 model = make_pruning_permanent(model)
 
-            # --- Calculate Metrics (using internal functions) ---
+            # Calculate Metrics
             model.to(DEVICE)
 
             params = count_params(model)
             flops = count_flops(model, device=DEVICE)
             latency = measure_latency(model, device=DEVICE)
 
-            # --- Save Results ---
+            # Save Results
             row = [model_name, method, amount, f"{val_acc:.4f}", params, flops, f"{latency:.6f}"]
             writer.writerow(row)
             csv_file.flush()
 
-            # --- Save Cleaned .pt File ---
+            # Save Cleaned .pt File
             new_filename = filename.replace(".pt", f"{SAVE_SUFFIX}.pt")
             save_path = os.path.join(OUTPUT_DIR, new_filename)
 

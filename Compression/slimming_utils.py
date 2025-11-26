@@ -1,5 +1,3 @@
-# slimmer.py
-
 import torch
 import torch.nn as nn
 import torch_pruning as tp
@@ -9,12 +7,9 @@ from typing import Tuple
 NUM_CLASSES = 43
 
 
+# Physically remove channels using torch-pruning (Structured Pruning)
 def physically_prune_structured(model: nn.Module, pruning_ratio: float,
                                 example_input_size: Tuple[int, int, int, int] = (1, 3, 32, 32)) -> nn.Module:
-    """
-    Physically removes channels using torch-pruning (Structured Pruning).
-    This shrinks the tensor size and is crucial for real speedup.
-    """
     model.cpu()
     example_inputs = torch.randn(*example_input_size)
 
@@ -37,11 +32,8 @@ def physically_prune_structured(model: nn.Module, pruning_ratio: float,
     return model
 
 
+# Remove pruning masks - make the zero values permanent in the weight tensors
 def make_pruning_permanent(model: nn.Module) -> nn.Module:
-    """
-    Removes pruning masks for both Structured and Unstructured methods.
-    This makes the zero values permanent in the weight tensors.
-    """
     for _, module in model.named_modules():
         # Check if the module has active pruning reparametrizations
         if hasattr(module, 'weight_mask'):
