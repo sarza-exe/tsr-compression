@@ -1,3 +1,4 @@
+import os
 import torch
 import time
 from thop import profile
@@ -17,14 +18,22 @@ def get_input_size(model):
 
     return INPUT_SIZES.get(model_name, (1, 3, 32, 32))
 
+
+def get_file_size_mb(filepath):
+    if not os.path.exists(filepath): return 0.0
+    return os.path.getsize(filepath) / (1024 * 1024)
+
+
 def count_params(model):
     return sum(torch.count_nonzero(p).item() for p in model.parameters())
+
 
 def count_flops(model, device="cuda" if torch.cuda.is_available() else "cpu"):
     input_size = get_input_size(model)
     dummy = torch.randn(*input_size).to(device)
     flops, params = profile(model, inputs=(dummy,))
     return flops
+
 
 def measure_latency(model, device="cuda" if torch.cuda.is_available() else "cpu", runs=100):
     input_size = get_input_size(model)
