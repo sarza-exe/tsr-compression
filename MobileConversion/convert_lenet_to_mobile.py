@@ -3,56 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.mobile_optimizer
 import os
-
-
-# --- Krok 1: Definicja Architektury Modelu ---
-
-class EnhancedLeNet5(nn.Module):
-    """
-    Enhanced version of LeNet-5 with BatchNorm, Dropout, and ReLU activations.
-    """
-
-    def __init__(self, num_classes=43):
-        super().__init__()
-        # Convolutional layers with BatchNorm
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)
-        self.bn2 = nn.BatchNorm2d(64)
-
-        # Dropout for regularization
-        self.dropout = nn.Dropout(0.5)
-
-        # Fully connected layers
-        # Input shape po dwóch warstwach poolingu (32 -> 16 -> 8) wynosi 64 * 8 * 8
-        self.fc1 = nn.Linear(64 * 8 * 8, 256)
-        self.fc2 = nn.Linear(256, num_classes)
-
-        # Pooling layer
-        self.pool = nn.MaxPool2d(2, 2)
-
-    def forward(self, x):
-        # Warstwa 1: Conv -> BN -> ReLU -> Pool (32x32 -> 16x16)
-        x = self.pool(F.relu(self.bn1(self.conv1(x))))
-        # Warstwa 2: Conv -> BN -> ReLU -> Pool (16x16 -> 8x8)
-        x = self.pool(F.relu(self.bn2(self.conv2(x))))
-
-        # Spłaszczenie do wektora (Flatten)
-        x = torch.flatten(x, 1)
-
-        # Warstwa FC1
-        x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-
-        # Warstwa FC2 (wyjście)
-        x = self.fc2(x)
-        return x
+from Architectures.enhanced_lenet5 import EnhancedLeNet5
 
 
 # --- Krok 2: Ustawienia ---
 
-INPUT_PT_FILE = "Models/EnhancedLeNet5_best.pt"
-OUTPUT_PTL_FILE = "Models/EnhancedLeNet5_best.ptl"
+INPUT_PT_FILE = "../Models/EnhancedLeNet5_best.pt"
+OUTPUT_PTL_FILE = "./MobileModels/EnhancedLeNet5_best.ptl"
 NUM_CLASSES = 43
 
 # Kształt wejściowy: [BatchSize, Channels, Height, Width]
