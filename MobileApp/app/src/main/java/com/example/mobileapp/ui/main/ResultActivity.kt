@@ -19,6 +19,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -300,37 +302,51 @@ fun ResultScreenWithModels(
         if (modelFiles.isEmpty()) {
             Text(text = "No models found in assets/models/", style = MaterialTheme.typography.bodyMedium)
         } else {
-            LazyRow(modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp) // Odstępy pionowe między modelami
             ) {
-                itemsIndexed(modelFiles) { index, modelFile ->
+                modelFiles.forEachIndexed { index, modelFile ->
                     val isSelected = index == selectedIdx
                     val displayName = modelFile.removeSuffix(".ptl")
+
                     Surface(
                         tonalElevation = if (isSelected) 8.dp else 0.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
-                            .padding(4.dp)
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp)
                             .clickable {
-                                // select this model (cannot unselect; exactly one selected)
                                 selectedIdx = index
                             }
                     ) {
-                        Text(
-                            text = displayName,
+                        Row(
                             modifier = Modifier
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
-                        )
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = displayName,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(36.dp))
     }
 }
