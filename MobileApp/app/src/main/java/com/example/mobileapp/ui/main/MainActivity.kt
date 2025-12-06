@@ -247,16 +247,20 @@ fun MainScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Traffic Sign Tester", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(48.dp))
+        Text(text = "Tester for TSR Models", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Button(onClick = onPickFromGallery, modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(onClick = onPickFromGallery, modifier = Modifier.fillMaxWidth().height(50.dp)) {
                 Text("Recognise sign from gallery")
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Button(onClick = onOpenCamera, modifier = Modifier.weight(1f)) {
+            Button(onClick = onOpenCamera, modifier = Modifier.fillMaxWidth().height(50.dp)) {
                 Text("Recognise sign from photo")
             }
         }
