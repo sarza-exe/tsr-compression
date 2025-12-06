@@ -2,14 +2,14 @@ import torch
 import torch.nn as nn
 import torch.utils.mobile_optimizer
 import os
-from Architectures.enhanced_lenet5 import EnhancedLeNet5
+from Architectures.cnn_6x2 import SimpleCNN_6x2
 import torch.nn.utils.prune as prune
 
 
 # --- Krok 2: Ustawienia ---
 
-INPUT_PT_FILE = "../Models/EnhancedLeNet5_best.pt"
-OUTPUT_PTL_FILE = "./MobileModels/EnhancedLeNet5_best.ptl"
+INPUT_PT_FILE = "../Models/SimpleCNN_6x2_best.pt"
+OUTPUT_PTL_FILE = "./MobileModels/SimpleCNN_6x2_best.ptl"
 NUM_CLASSES = 43
 
 # Kształt wejściowy: [BatchSize, Channels, Height, Width]
@@ -32,7 +32,7 @@ def convert_model():
     device = torch.device('cpu')
 
     # 1. Stwórz instancję modelu
-    model = EnhancedLeNet5(num_classes=NUM_CLASSES).to(device)
+    model = SimpleCNN_6x2(num_classes=NUM_CLASSES).to(device)
 
     # 2. Załaduj wagi z checkpointa
     print(f"Ładowanie wag z {INPUT_PT_FILE}...")
@@ -66,8 +66,8 @@ def convert_model():
 
 # --- Krok 4: Logika Konwersji Modelu Pruningowanego ---
 
-PRUNED_INPUT_PT_FILE = "../Compressed_Models/pruned_EnhancedLeNet5_unstructured_0.7.pt"
-OUTPUT_PRUNED_PTL_FILE = "./MobileModels/EnhancedLeNet5_pruned.ptl"
+PRUNED_INPUT_PT_FILE = "../Compressed_Models/pruned_SimpleCNN_6x2_unstructured_0.7.pt"
+OUTPUT_PRUNED_PTL_FILE = "./MobileModels/SimpleCNN_6x2_pruned.ptl"
 
 
 def convert_pruned_model():
@@ -79,7 +79,7 @@ def convert_pruned_model():
     device = torch.device('cpu')
 
     # 1. Stwórz czystą instancję modelu
-    model = EnhancedLeNet5(num_classes=NUM_CLASSES).to(device)
+    model = SimpleCNN_6x2(num_classes=NUM_CLASSES).to(device)
 
     # =========================================================================
     # KROK A: PRZYGOTOWANIE MODELU (Musi być PRZED ładowaniem wag!)
@@ -153,8 +153,8 @@ def convert_pruned_model():
 
 # --- Krok 5: Logika Konwersji Modelu Kwantyzowanego Dynamicznie ---
 
-QUANTIZED_INPUT_PT_FILE = "../Compressed_Models/quantized_EnhancedLeNet5_Dynamic.pt"
-OUTPUT_QUANTIZED_PTL_FILE = "./MobileModels/EnhancedLeNet5_quantized_dynamic.ptl"
+QUANTIZED_INPUT_PT_FILE = "../Compressed_Models/quantized_SimpleCNN_6x2_Dynamic.pt"
+OUTPUT_QUANTIZED_PTL_FILE = "./MobileModels/SimpleCNN_6x2_quantized_dynamic.ptl"
 
 
 def convert_dynamic_quantized_model():
@@ -166,7 +166,7 @@ def convert_dynamic_quantized_model():
     device = torch.device('cpu')
 
     # 1. Stwórz czystą instancję modelu (Float32)
-    float_model = EnhancedLeNet5(num_classes=NUM_CLASSES).to(device)
+    float_model = SimpleCNN_6x2(num_classes=NUM_CLASSES).to(device)
 
     # =========================================================================
     # KROK A: ODTWORZENIE STRUKTURY KWANTYZACJI
