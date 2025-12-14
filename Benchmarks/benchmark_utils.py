@@ -93,6 +93,51 @@ def load_pruned_model(ModelClass, pruning_type, amount, filepath):
     return model
 
 
+def load_pipeline_model(ModelClass, pruning_type, amount, quant_method, filepath):
+    """
+    Loads a model that has undergone BOTH Structured Pruning and Quantization.
+    """
+    # 1. Create Base Model
+    model = ModelClass(num_classes=43)
+
+    # 2. Resize Architecture (if Structured Pruning was used)
+    if pruning_type == "structured":
+        input_size = get_input_size(model)
+        model = physically_prune_structured(model, pruning_ratio=amount, example_input_size=input_size)
+
+    # 3. Apply Quantization Structure
+    if quant_method == "Dynamic":
+        model = torch.quantization.quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8)
+
+    elif quant_method in ["Static", "QAT"]:
+        model = QuantizedModelWrapper(model)
+        model.eval()
+
+        # Fusing Logic
+        model_name = ModelClass.__name__
+        try:
+            if "SimpleCNN" in model_name:
+                torch.ao.quantization.fuse_modules(model.model, [
+                    ['conv1', 'bn1'], ['conv2', 'bn2'], ['conv3', 'bn3'],
+                    ['conv4', 'bn4'], ['conv5', 'bn5'], ['conv6', 'bn6']
+                ], inplace=True)
+            elif "LeNet" in model_name:
+                torch.ao.quantization.fuse_modules(model.model, [['conv1', 'bn1'], ['conv2', 'bn2']], inplace=True)
+        except:
+            pass
+
+        model.qconfig = torch.quantization.get_default_qconfig('x86')
+        torch.quantization.prepare(model, inplace=True)
+        torch.quantization.convert(model, inplace=True)
+
+    # 4. Load Weights
+    checkpoint = torch.load(filepath, map_location="cpu")
+    state_dict = checkpoint.get("model_state_dict", checkpoint)
+
+    model.load_state_dict(state_dict, strict=False)
+    return model
+
+
 
 # 3. Reporting
 def generate_final_report(all_results):

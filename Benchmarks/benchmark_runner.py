@@ -15,7 +15,7 @@ from Architectures.efficientnet_b0_custom import EfficientNetB0Custom
 from data_original import val_loader
 from Training.train_utils import validate
 from Compression.metrics_utils import count_params, measure_latency, get_file_size_mb
-from benchmark_utils import load_quantized_model, load_pruned_model, generate_final_report
+from benchmark_utils import load_quantized_model, load_pruned_model, generate_final_report, load_pipeline_model
 
 # Configuration
 DEVICE = "cpu"
@@ -23,6 +23,7 @@ ORIGINAL_MODELS_DIR = "../Models"
 PRUNED_DIR = "../Compressed_Models/Pruned_normal"
 SLIMMED_DIR = "../Compressed_Models/Pruned_slimmed"
 QUANTIZED_DIR = "../Compressed_Models/Quantization"
+PIPELINE_DIR = "../Compressed_Models/Pipeline"
 
 os.makedirs(SLIMMED_DIR, exist_ok=True)
 
@@ -162,7 +163,63 @@ def main():
                 print(f"\n      Error: {e}")
 
 
-    # 4. Generate Report
+    # 4. Scan Pipeline Models (Pruned + Quantized)
+    print(f"\n>>> Scanning Pipeline Models in {PIPELINE_DIR}")
+    if os.path.exists(PIPELINE_DIR):
+        for f in os.listdir(PIPELINE_DIR):
+            if not f.startswith("Final_") or not f.endswith(".pt"): continue
+
+            try:
+                # Format: Final_SimpleCNN_6x2_PrunedS0.5_QuantStatic.pt
+                parts = f.replace(".pt", "").split("_")
+
+                # Parsing the name
+                quant_part = parts[-1]  # np. 'QuantStatic'
+                prune_part = parts[-2]  # np. 'PrunedS0.5'
+
+                quant_method = quant_part.replace("Quant", "")
+
+                # S = Structured, U = Unstructured
+                p_type_char = prune_part.replace("Pruned", "")[0]
+                p_amount = float(prune_part.replace("Pruned", "")[1:])
+                p_type = "structured" if p_type_char == 'S' else "unstructured"
+
+                model_name = "_".join(parts[1:-2])
+
+                if model_name not in MODEL_CLASSES: continue
+
+                print(f"\n-> Benchmarking Pipeline: {model_name} | {p_type} {p_amount} + {quant_method}")
+
+                # Load
+                path = os.path.join(PIPELINE_DIR, f)
+                model = load_pipeline_model(MODEL_CLASSES[model_name], p_type, p_amount, quant_method, path)
+                model.to(DEVICE)
+
+                # Metrics
+                _, acc = validate(model, val_loader, criterion, DEVICE)
+
+                # Params
+                raw_params = count_params(model)
+                params_str = f"{raw_params / 1e6:.2f}" if raw_params > 0 else "N/A"
+
+                size_mb = get_file_size_mb(path)
+                lat = measure_latency(model, device=DEVICE) * 1000
+
+                all_results.append({
+                    "Model": model_name,
+                    "Method": f"Pruning ({p_type}, {p_amount}) + Quantization ({quant_method})",
+                    "Compression": "Mix",
+                    "Val. accuracy": f"{acc * 100:.2f}%",
+                    "Num of params (M)": params_str,
+                    "Size (MB)": f"{size_mb:.2f}",
+                    "Latency (ms)": f"{lat:.2f}"
+                })
+
+            except Exception as e:
+                print(f"\n      Error processing {f}: {e}")
+
+
+    # 5. Generate Report
     if all_results:
         generate_final_report(all_results)
     else:

@@ -42,11 +42,6 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Skipping quantization for {ModelClass.__name__} due to error: {e}")
 
-        # TODO: implement distillation
-        # Run distillation
-        # distill_results = run_distillation(ModelClass)
-        # all_results.extend(distill_results)
-
     # Save all results to CSV
     df = pd.DataFrame(all_results)
     df.to_csv(CSV_PATH, index=False)
